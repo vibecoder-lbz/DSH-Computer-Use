@@ -2,7 +2,7 @@
 
 DeepSeek Harness 的 Windows 电脑控制插件。Agent 可以发现软件、读取窗口和控件、点击和输入，并通过截图核对结果。
 
-**推荐安装 `desktop-auto`，当前版本 0.1.2。** 优先使用后台接口；不支持时自动接管当前桌面，显示蓝色内凹边缘、内收粒子与 DeepSeek 鲸鱼光标。PowerShell 辅助进程以隐藏方式启动。
+**推荐安装 `desktop-auto`，当前版本 0.1.3。** 优先使用后台接口；不支持时自动接管当前桌面，显示蓝色内凹边缘、内收粒子与 DeepSeek 鲸鱼光标。PowerShell 辅助进程以隐藏方式启动。
 
 ## 环境要求
 
@@ -27,7 +27,7 @@ Resolve-Path .\desktop-auto
 
 记下最后输出的绝对路径。例如克隆到 `D:\project` 后，插件路径为 `D:\project\DSH-Computer-Use\desktop-auto`。
 
-**安装目标必须是 `desktop-auto` 子目录。** 仓库根目录保留着早期插件，直接安装根目录会安装旧版。
+**安装目标必须是 `desktop-auto` 子目录。** 仓库根目录仅提供项目说明，插件入口位于该子目录。
 
 ### 2. 在 Harness 中安装
 
@@ -177,9 +177,6 @@ node integration.test.js
 
 | 目录或文件 | 用途 |
 | --- | --- |
-| [desktop-auto](./desktop-auto/README.md) | 当前推荐安装的插件，0.1.2 |
-| [desktop-hybrid](./desktop-hybrid/README.md) | 早期需要确认接管的版本，历史参考 |
-| [background-plugin](./background-plugin/README.md) | 早期后台只读版本，历史参考 |
-| [PLUGIN.md](./PLUGIN.md) | 根目录旧版插件接入说明 |
+| [desktop-auto](./desktop-auto/README.md) | 当前维护的插件，0.1.3 |
 
 鲸鱼光标素材来源：[DeepSeek 官方站点 favicon](https://www.deepseek.com/favicon.ico)。

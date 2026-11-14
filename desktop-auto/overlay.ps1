@@ -48,9 +48,8 @@ $startInfo.WindowStyle = [Diagnostics.ProcessWindowStyle]::Hidden
 $watchdogProcess = [Diagnostics.Process]::Start($startInfo)
 $watchdogProcess.Dispose()
 try {
-    $original=[Drawing.Bitmap]::new((Join-Path $PSScriptRoot 'deepseek-whale.png'))
-    $small=[Drawing.Bitmap]::new($original,[Drawing.Size]::new(32,32))
-    $icon=$small.GetHicon()
+    $cursorBitmap=[Drawing.Bitmap]::new((Join-Path $PSScriptRoot 'deepseek-whale.png'))
+    $icon=$cursorBitmap.GetHicon()
     try {
         foreach ($cursorId in @(32512,32513,32514,32515,32516,32642,32643,32644,32645,32646,32648,32649,32650,32651)) {
             $info=New-Object WhaleCursor+Info
@@ -61,6 +60,6 @@ try {
                 if ($cursor -eq [IntPtr]::Zero -or ![WhaleCursor]::SetSystemCursor($cursor,[uint32]$cursorId)) { throw 'Cannot install whale cursor' }
             } finally { [void][WhaleCursor]::DeleteObject($info.mask); [void][WhaleCursor]::DeleteObject($info.color) }
         }
-    } finally { [void][WhaleCursor]::DestroyIcon($icon); $small.Dispose(); $original.Dispose() }
+    } finally { [void][WhaleCursor]::DestroyIcon($icon); $cursorBitmap.Dispose() }
     [DshDesktopOverlay.OverlayRunner]::Run([IO.Path]::GetFullPath($StatePath), $OwnerPid, $PollMs)
 } finally { [void][WhaleCursor]::SystemParametersInfo(0x57,0,[IntPtr]::Zero,0) }

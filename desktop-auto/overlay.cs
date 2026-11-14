@@ -24,7 +24,6 @@ namespace DshDesktopOverlay
             try { Native.SetThreadDpiAwarenessContext(new IntPtr(-4)); }
             catch (EntryPointNotFoundException) { }
             var window = new OverlayWindow(statePath, ownerPid, pollMs);
-            window.ShowActivated = false;
             window.Show();
             if (!window.Finished) Dispatcher.Run();
         }
