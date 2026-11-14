@@ -4,6 +4,14 @@ DeepSeek Harness 的 Windows 电脑控制插件。Agent 可以发现软件、读
 
 **推荐安装 `desktop-auto`，当前版本 0.1.2。** 优先使用后台接口；不支持时自动接管当前桌面，显示蓝色内凹边缘、内收粒子与 DeepSeek 鲸鱼光标。PowerShell 辅助进程以隐藏方式启动。
 
+## 无需 Python 或独立服务
+
+**最新版 `dsh-desktop-auto` 不使用 Python，也不需要启动 Python 服务。** 安装并启用插件后，直接在 Harness 对话中描述任务即可；无需运行 `python computer_agent.py serve`，也无需启动额外的 HTTP 或 MCP 服务。
+
+运行方式：Harness 加载 JavaScript 插件 → 插件按需调用 Windows PowerShell 5.1 → Windows UI Automation / Win32 接口完成窗口检查和操作，WPF 显示接管光效。辅助 PowerShell 进程隐藏启动，由插件管理，无需用户手动启动或维护。
+
+仓库中的 Python 文件及旧版目录仅供历史参考，不是最新版的运行依赖。请安装 `desktop-auto` 子目录；根目录的旧版插件采用了不同实现。
+
 ## 环境要求
 
 - Windows 10/11，已登录且未锁屏的交互桌面。
