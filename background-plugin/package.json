@@ -1,0 +1,10 @@
+{
+  "name": "dsh-computer-use-background",
+  "version": "0.1.0",
+  "description": "Background Windows UI Automation and window capture for DeepSeek Harness",
+  "private": true,
+  "type": "module",
+  "exports": {".": "./index.js", "./locale/*.json": "./locale/*.json", "./icon": "./icon.svg"},
+  "files": ["index.js", "computer_agent.py", "windows_backend.ps1", "tool-schemas.json", "cordis.patch.yml", "locale/*.json", "icon.svg", "README.md"],
+  "dsh": {"bundle": {"patch": "./cordis.patch.yml"}}
+}

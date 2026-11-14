@@ -1,0 +1,16 @@
+# Generated screenshots and private desktop captures
+artifacts/
+
+# Python and Node caches
+__pycache__/
+*.py[cod]
+node_modules/
+
+# Generated distribution packages
+*.tgz
+
+# Local configuration and credentials
+.env
+.env.*
+!.env.example
+*.log

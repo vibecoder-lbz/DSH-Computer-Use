@@ -1,0 +1,10 @@
+{
+  "name": "dsh-desktop-hybrid",
+  "version": "0.1.0",
+  "description": "Background-first Windows control with visible desktop takeover for DeepSeek Harness",
+  "private": true,
+  "type": "module",
+  "exports": {".": "./index.js", "./locale/*.json": "./locale/*.json", "./icon": "./icon.svg"},
+  "files": ["index.js", "schemas.json", "native.ps1", "overlay.ps1", "overlay.cs", "cursor-restore.ps1", "deepseek-whale.png", "cordis.patch.yml", "locale/*.json", "icon.svg", "README.md"],
+  "dsh": {"bundle": {"patch": "./cordis.patch.yml"}}
+}

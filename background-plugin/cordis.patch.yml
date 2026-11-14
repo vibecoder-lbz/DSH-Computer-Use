@@ -1,0 +1,4 @@
+- insert:
+    - id: computer-use-background
+      name: dsh-computer-use-background
+      config: {}

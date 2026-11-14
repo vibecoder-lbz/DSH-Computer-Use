@@ -1,0 +1,145 @@
+[
+  {
+    "name": "apps",
+    "description": "List installed applications from Windows uninstall registry entries.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "query": {
+          "type": "string"
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 500
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "windows",
+    "description": "List visible desktop windows and their handles.",
+    "input_schema": {
+      "type": "object",
+      "properties": {},
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "inspect",
+    "description": "Read a bounded UI Automation tree for one window. Re-inspect after UI changes.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "hwnd": {
+          "type": "integer"
+        },
+        "limit": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 500
+        },
+        "depth": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 12
+        }
+      },
+      "required": [
+        "hwnd"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "screenshot",
+    "description": "Save a PNG of a window, or the desktop when hwnd is omitted.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "hwnd": {
+          "type": "integer"
+        },
+        "path": {
+          "type": "string"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "compare",
+    "description": "Compare two same-sized PNG images; visual change does not establish task success.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "before": {
+          "type": "string"
+        },
+        "after": {
+          "type": "string"
+        },
+        "threshold": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 255
+        },
+        "stride": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 32
+        }
+      },
+      "required": [
+        "before",
+        "after"
+      ],
+      "additionalProperties": false
+    }
+  },
+  {
+    "name": "wait",
+    "description": "Wait a bounded time for a matching UI Automation control.",
+    "input_schema": {
+      "type": "object",
+      "properties": {
+        "hwnd": {
+          "type": "integer"
+        },
+        "selector": {
+          "type": "object",
+          "properties": {
+            "ref": {
+              "type": "string"
+            },
+            "automation_id": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "control_type": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "minProperties": 1
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30000
+        }
+      },
+      "required": [
+        "hwnd",
+        "selector"
+      ],
+      "additionalProperties": false
+    }
+  }
+]

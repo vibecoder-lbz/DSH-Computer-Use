@@ -1,0 +1,4 @@
+- insert:
+    - id: desktop-auto
+      name: dsh-desktop-auto
+      config: {}
