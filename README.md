@@ -1,113 +1,186 @@
 # DSH-Computer-Use
 
-DeepSeek Harness Windows 电脑控制插件。
+DeepSeek Harness 的 Windows 电脑控制插件。Agent 可以发现软件、读取窗口和控件、点击和输入，并通过截图核对结果。
 
-当前使用的原生 Harness 插件是 [desktop-auto](./desktop-auto/README.md)：后台优先，不支持时自动接管，带蓝色内凹边缘、内收粒子和鲸鱼光标。安装后 agent 直接调用 `computer_*` 工具，截图以图像附件返回。
+**推荐安装 `desktop-auto`，当前版本 0.1.2。** 优先使用后台接口；不支持时自动接管当前桌面，显示蓝色内凹边缘、内收粒子与 DeepSeek 鲸鱼光标。PowerShell 辅助进程以隐藏方式启动。
 
-本页以下内容是早期 Python 后端的调试说明；旧版插件接入说明见 [PLUGIN.md](./PLUGIN.md)。旧实现保留作历史参考，不是当前插件的运行依赖。
+## 环境要求
 
-供用户或 agent 查看安装软件、检查窗口、通过 Windows UI Automation 操作控件，并用截图验证结果。使用 Python 标准库与系统自带 Windows PowerShell 5.1，无需 pip 安装。
+- Windows 10/11，已登录且未锁屏的交互桌面。
+- 已安装并运行 DeepSeek Harness，具有插件管理与工具调用能力。
+- 系统自带 Windows PowerShell 5.1、.NET Framework/WPF。
+- 从源码克隆需要 Git；运行开发测试、打包需要 Node.js 与 npm。
 
-需要 Windows 10/11、Python 3.10+、已登录且未锁屏的交互桌面。推荐 64 位 Python。控制管理员软件时，进程也可能需要管理员权限。
+最新版插件不依赖 Python，不需要虚拟机、额外 API Key、MCP 服务或单独启动后端。模型由 Harness 配置；需要根据截图操作时，应使用支持图像输入的模型。控制管理员权限运行的软件时，Harness 也可能需要相同权限。
 
-## 快速开始
+## 安装
 
-在项目目录运行：
+### 1. 下载项目
 
-```powershell
-python computer_agent.py apps
-python computer_agent.py windows
-python computer_agent.py describe
-python computer_agent.py screenshot
-```
-
-截图默认保存到 `artifacts/screenshot.png`，再次调用会覆盖。需要保留历史时指定不同路径。
-
-带参数推荐使用 UTF-8 JSON 文件，避免 Windows PowerShell 5.1 对原生程序 JSON 引号的处理差异：
+在 PowerShell 中运行：
 
 ```powershell
-@{query='Chrome'; limit=20} | ConvertTo-Json | Set-Content -Encoding UTF8 params.json
-python computer_agent.py apps --params-file params.json
+git clone https://github.com/vibecoder-lbz/DSH-Computer-Use.git
+Set-Location .\DSH-Computer-Use
+Resolve-Path .\desktop-auto
 ```
 
-也支持 `--params` 直接接收 JSON，适合程序调用或能正确保留引号的 shell。
+记下最后输出的绝对路径。例如克隆到 `D:\project` 后，插件路径为 `D:\project\DSH-Computer-Use\desktop-auto`。
 
-## 操作流程与接口
+**安装目标必须是 `desktop-auto` 子目录。** 仓库根目录保留着早期插件，直接安装根目录会安装旧版。
 
-1. 用 `windows` 获取目标窗口的 `hwnd`。
-2. 用 `inspect` 获取控件树，确认名称、类型、`automation_id`、`ref` 和支持的 patterns。
-3. 优先用 `invoke`、`set_value`、`select`；没有控件接口时先截图，再用 `click`。
-4. 操作后重新检查控件或截图，核对预期结果。界面变化后应重新获取控件引用。
+### 2. 在 Harness 中安装
 
-表中句柄 `123456` 需要替换成实际返回值。将 params 示例写入 JSON 文件，再用 `--params-file` 传入。
+在 Harness 对话中告诉 Agent（把路径换成你自己的）：
 
-| action | params 示例 | 用途 |
-| --- | --- | --- |
-| `apps` | `{"query":"Chrome","limit":20}` | 软件名过滤、版本、发布者、安装目录、图标来源 |
-| `windows` | `{}` | 可见桌面窗口 |
-| `inspect` | `{"hwnd":123456,"limit":150,"depth":5}` | 有上限的控件树；truncated 表示省略 |
-| `launch` | `{"path":"C:\\Windows\\System32\\notepad.exe","args":[]}` | 启动完整路径 exe，之后确认窗口就绪 |
-| `invoke` | `{"hwnd":123456,"selector":{"name":"确定","control_type":"ControlType.Button"}}` | InvokePattern 操作 |
-| `set_value` | `{"hwnd":123456,"selector":{"automation_id":"AgentInput"},"value":"你好"}` | ValuePattern 设置编辑框 |
-| `select` | `{"hwnd":123456,"selector":{"ref":"inspect 返回的 ref"}}` | SelectionItemPattern 选择 |
-| `wait` | `{"hwnd":123456,"selector":{"name":"完成"},"timeout_ms":5000}` | 等待控件出现，最长 30 秒 |
-| `click` | `{"hwnd":123456,"x":100,"y":80}` | 激活窗口后点击窗口内坐标 |
-| `screenshot` | `{"hwnd":123456,"path":"artifacts/before.png"}` | 窗口区域 PNG；省略 hwnd 则截取整个虚拟桌面 |
-| `compare` | `{"before":"artifacts/before.png","after":"artifacts/after.png","threshold":20,"stride":4}` | 相同尺寸图片的采样像素变化率 |
+> 请使用 plugin_manager 安装本地插件 D:\project\DSH-Computer-Use\desktop-auto，并启用。若已有旧版电脑控制插件，请停用或卸载旧版，保留 dsh-desktop-auto。
 
-selector 字段同时满足，字符串区分大小写。空 selector、多个匹配、没有匹配均报错。控件必须支持对应 UIA pattern。
-
-截图是实际屏幕像素，包含覆盖窗口的内容。最小化窗口不能截图。坐标单位是物理像素，click 相对窗口外框左上角。桌面截图原点见 screen_origin，多屏原点可能为负。窗口移动、调整大小或 DPI 改变后需要重新定位。
-
-`compare.changed_ratio > 0` 只证明画面变化，不能证明任务成功。应核对目标文字、控件状态或让有视觉能力的模型查看 PNG。本工具不包含 OCR、图像语义理解或模型 API。
-
-## 给 agent 调用
-
-这是独立的工具层，提供 JSON Lines 协议，不内置大模型或自然语言规划器，也未自动注册到 DSH/MCP。agent 可启动为子进程，按行写入请求、按行读取结果：
-
-```powershell
-python computer_agent.py serve
-```
-
-每行一个完整 JSON：
+Agent 使用的工具参数如下；这是 Harness 工具调用，不是 PowerShell 命令：
 
 ```json
-{"id":"discover","action":"describe"}
-{"id":"list","action":"windows","params":{}}
-{"id":"read","action":"inspect","params":{"hwnd":123456}}
-{"id":"press","action":"invoke","params":{"hwnd":123456,"selector":{"name":"确定"}}}
+{
+  "action": "install_bundle",
+  "target": "D:\\project\\DSH-Computer-Use\\desktop-auto",
+  "enabled": true
+}
 ```
 
-响应回显 id。成功返回 `{"id":"list","ok":true,"result":{...}}`，失败返回 `{"id":"list","ok":false,"error":"..."}`。describe 返回所有工具的参数 JSON Schema 和调用顺序。标准输出只含 JSON 响应，逐行 flush。应等待上一条结果，再发下一条桌面操作。
+安装影响当前 Harness profile。是否需要用户批准取决于当前权限模式；无需手动编辑 profile 的配置文件或安装依赖。
 
-接入 function calling：调用 describe 获取 tools，将 name、description、input_schema 转换成模型提供商的工具格式。把模型返回的工具名与参数转成 action 和 params，将 result/error 回传模型。截图返回本地路径，调用方需要读取 PNG 并作为图像输入发送给视觉模型。
+### 3. 确认安装
 
-也可以 Python 直接调用，失败抛异常：
+在 Harness 的插件页面确认出现并启用 **“电脑控制 · 后台优先”**，描述包含自动接管、内收粒子和鲸鱼图标。包名应为 `dsh-desktop-auto`。
 
-```python
-from computer_agent import execute
+可以让 Agent 执行一次只读检查：
 
-windows = execute("windows", {})
-# 依据用户任务选择目标 hwnd：
-# tree = execute("inspect", {"hwnd": hwnd})
-# execute("invoke", {"hwnd": hwnd, "selector": {"ref": control_ref}})
+> 请列出当前电脑窗口，并查看电脑接管状态，不进行点击或输入。
+
+正常情况下，Agent 能调用 `computer_windows`，且 `computer_takeover` 的状态为 `active: false`。首次安装是否立即生效以插件管理器返回结果为准；提示需要重启时，重启 Harness。
+
+## 配置与默认行为
+
+**当前没有需要填写的插件配置项，使用默认配置 `{}` 即可。** 不需要填写端口、密钥或 Python 路径。
+
+| 项目 | 当前行为 |
+| --- | --- |
+| 控制方式 | 优先后台接口；不支持时自动前台接管并执行原动作 |
+| 后台写入 | 标准 Win32 Edit 文本设置、Button 按钮调用；其他控件可能需要前台 |
+| 鼠标键盘 | 点击、移动、键盘输入和滚轮使用前台接管 |
+| 接管提示 | 当前桌面蓝色边缘、内收粒子和鲸鱼光标，无鼠标轨迹 |
+| 辅助进程 | 隐藏启动 PowerShell，接管光效仍然可见 |
+| 接管时长 | 每次最多 120 秒，不自动续期 |
+| 会话归属 | 同一时间一个会话控制一个目标窗口 |
+| 紧急停止 | `Ctrl+Alt+Esc`，也可让 Agent 调用 `computer_stop` |
+| 控制结束 | 移除覆盖层，恢复 Windows 鼠标主题 |
+| 后台截图 | 使用 PrintWindow；可能为空或陈旧，不因截图失败自动切前台 |
+
+以上是代码中的默认行为，当前未提供通过设置面板修改时长、光效或接管模式的选项。Harness 自身的权限与审批仍然有效；自动接管不代表可以执行用户未授权的业务操作。
+
+## 使用教程
+
+安装后直接向 Harness 描述任务即可，无需自己调用脚本。例如：
+
+> 查看当前打开的软件和窗口。
+
+> 打开记事本，输入“电脑控制测试”，核对文字后停止接管，不保存文件。
+
+> 打开微信，找到名为“示例群”的群聊，发送“测试消息”，发送后核对结果并结束接管。
+
+发送消息类任务请给出准确的目标和完整内容。插件本身没有 `computer_launch` 工具；打开尚未运行的软件时，Agent 需要结合 Harness 的其他已授权工具启动程序，再使用电脑控制工具继续操作。
+
+### 推荐操作顺序
+
+1. 先调用 `computer_windows` 获取目标窗口句柄 `hwnd`。
+2. 调用 `computer_inspect` 查看控件，或调用 `computer_screenshot` 查看窗口画面。
+3. 优先通过控件执行 `invoke`、`set_value`、`select`；无法后台执行时会自动接管。
+4. 需要坐标操作时，依据最新截图进行点击。坐标相对目标窗口外框左上角，单位为物理像素。
+5. 操作后重新读取控件或截图核对实际结果；完成后释放接管。
+
+接管期间会占用鼠标键盘。用户移动鼠标造成冲突、切换前台窗口或按住修饰键时，相关输入检查可能取消动作；需要中止时直接按 `Ctrl+Alt+Esc`。
+
+### Agent 工具参考
+
+以下 JSON 是工具参数示例。示例句柄 `123456` 与控件引用需替换成当前检查结果，不能直接照抄。
+
+| 工具 | 用途 | 参数示例 |
+| --- | --- | --- |
+| `computer_apps` | 查询卸载注册表中的软件 | `{"query":"微信","limit":20}` |
+| `computer_windows` | 列出桌面窗口 | `{}` |
+| `computer_inspect` | 读取有限深度的控件树 | `{"hwnd":123456,"limit":150,"depth":5}` |
+| `computer_wait` | 等待匹配控件出现 | `{"hwnd":123456,"selector":{"name":"完成"},"timeout_ms":5000}` |
+| `computer_screenshot` | 截取目标窗口，返回图像附件 | `{"hwnd":123456}` |
+| `computer_act` | 控件操作、点击或输入 | `{"hwnd":123456,"operation":"type","text":"你好"}` |
+| `computer_compare` | 比较同尺寸 PNG 的像素变化 | `{"before":"D:\\before.png","after":"D:\\after.png"}` |
+| `computer_takeover` | 查看状态或释放本会话接管 | `{"action":"status"}` 或 `{"action":"release"}` |
+| `computer_stop` | 立即停止插件接管 | `{}` |
+
+`computer_act` 支持 `invoke`、`set_value`、`select`、`click`、`move`、`type`、`key`、`scroll`。例如：
+
+```json
+{"hwnd":123456,"operation":"set_value","selector":{"ref":"当前 inspect 返回的引用"},"value":"你好"}
 ```
 
-建议给 agent 的简短指令：
+```json
+{"hwnd":123456,"operation":"click","x":200,"y":150}
+```
 
-> 先发现窗口并读取控件，优先使用控件接口。操作后重新检查控件或截图，核对用户要求的结果。界面变化时重新检查。超时后先检查实际状态，再决定是否重试。只操作用户任务涉及的软件与内容。
+```json
+{"hwnd":123456,"operation":"key","key":"Enter"}
+```
 
-启动、点击和控件操作会立即执行，调用方应按用户授权范围选择动作。没有开放任意 shell 执行或网络端口。
+只填写该操作需要的参数。控件选择条件必须非空且唯一，多个条件同时满足；界面变化后重新检查。输入文本上限为 2000 个 UTF-16 代码单元。常用按键包括 Enter、Tab、Escape、方向键和 Ctrl+A/C/V/S；不支持任意组合键。截图比较只能说明像素变化，不能替代业务结果核对。
 
-## 验证与限制
+## 更新与卸载
+
+源码安装使用本地目录链接，请保留安装目录。拉取更新：
 
 ```powershell
-python -m unittest -v test_computer_agent
-python test_computer_agent.py --desktop
+Set-Location D:\project\DSH-Computer-Use
+git pull --ff-only
 ```
 
-第一条验证协议和参数约束。第二条打开专用 WPF 测试窗口，枚举控件、设置文本、UIA 点击按钮并核对按钮写出的真实结果、保存并对比截图、验证同图零变化、测试窗口内坐标点击，最后关闭测试窗口。测试会短暂占用鼠标与前台焦点。
+**更新后重启 Harness，完整加载新的 JavaScript 模块。** 仅刷新网页不等于重载 Host 插件。若安装器报告 `already-installed`，不要重复安装；目录链接更新通常只需拉取代码并重启。切换到其他安装路径或安装包时，可让 Agent 通过插件管理器卸载旧包，再安装新目标。
 
-软件清单来自当前用户及系统 32/64 位卸载注册表；便携软件和部分 Store 软件可能缺失。display_icon 可能带图标索引或指向卸载程序，不能直接当作启动路径。应用专属业务 API 可在上层追加适配器，这里提供通用 Windows UIA 接口。
+卸载时告诉 Agent：
 
-在 DSH 等沙箱内，临时目录、进程启动、注册表或桌面访问可能需要宿主授权。可在普通本地 PowerShell 运行。后端超时表示动作状态可能未知，应先检查。本工具不支持锁屏、UAC 安全桌面或 Windows 服务会话。不同软件的 UIA 支持程度不同，自绘画布可能只能截图定位点击。当前机器的经典 WinForms 测试控件被 UIA 识别为 Pane，未暴露编辑和按钮接口；此类控件需要截图点击或后续补充 Win32 适配器。WPF 控件接口使用专用窗口验证。相关兼容性现象也见[公开案例](https://cloud.tencent.com/developer/ask/sof/114060301?from=16139)。当前未实现通用键盘快捷键、拖拽或滚轮。
+> 请停止电脑接管，并通过 plugin_manager 卸载 dsh-desktop-auto，保留其他插件。
+
+## 常见问题
+
+| 现象 | 处理方式 |
+| --- | --- |
+| 找不到 `computer_*` 工具 | 确认安装的是 `desktop-auto`，在当前 profile 已启用；按安装结果提示重启 |
+| 插件页面出现多个电脑控制插件 | 保留 `dsh-desktop-auto`，卸载旧的 `dsh-computer-use-windows`、`dsh-computer-use-background`、`dsh-desktop-hybrid` |
+| 后台操作变成桌面接管 | 目标软件缺少适用的后台接口，属于默认行为；现代自绘软件经常需要前台 |
+| 截图黑屏、空白或陈旧 | PrintWindow 对部分 GPU 窗口支持有限；不能将空白图当作操作成功 |
+| 无法操作最小化窗口 | 部分操作要求窗口可见；需要根据当前状态恢复窗口后重新检查 |
+| 输入中途停止 | 检查是否超出 120 秒、焦点改变、用户移动鼠标、目标窗口移动或按住修饰键 |
+| 操作超时 | 先检查目标实际状态，再决定后续动作，避免重复发送或提交 |
+| 控制管理员软件失败 | 检查 Harness 与目标程序的权限等级；UAC 安全桌面不受支持 |
+| 仍出现 PowerShell 窗口 | 确认使用 0.1.2 或更新代码并已重启 Harness；插件不会隐藏用户自行打开的终端 |
+
+软件清单来自卸载注册表，可能缺少便携软件和部分 Store 应用。插件不能保证任意软件都能后台操作；不支持锁屏桌面、UAC 安全桌面、通用拖拽和 Office COM 专属适配。
+
+## 开发与验证
+
+修改插件后可在专用测试窗口运行集成测试，测试会短暂占用前台鼠标键盘：
+
+```powershell
+Set-Location .\desktop-auto
+node --check index.js
+node integration.test.js
+```
+
+测试覆盖自动接管无提问、实际输入和按钮结果、截图附件、会话隔离与紧急停止。打包可运行 `npm pack`，生成的 `.tgz` 可作为 Harness 插件安装目标。仓库通过 `.gitignore` 排除桌面截图、缓存和生成的安装包。
+
+## 目录说明
+
+| 目录或文件 | 用途 |
+| --- | --- |
+| [desktop-auto](./desktop-auto/README.md) | 当前推荐安装的插件，0.1.2 |
+| [desktop-hybrid](./desktop-hybrid/README.md) | 早期需要确认接管的版本，历史参考 |
+| [background-plugin](./background-plugin/README.md) | 早期后台只读版本，历史参考 |
+| [PLUGIN.md](./PLUGIN.md) | 根目录旧版插件接入说明 |
+| [computer_agent.py](./computer_agent.py) | 早期独立 Python 后端，不是最新版运行依赖 |
+
+鲸鱼光标素材来源：[DeepSeek 官方站点 favicon](https://www.deepseek.com/favicon.ico)。
