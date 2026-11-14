@@ -4,14 +4,6 @@ DeepSeek Harness 的 Windows 电脑控制插件。Agent 可以发现软件、读
 
 **推荐安装 `desktop-auto`，当前版本 0.1.2。** 优先使用后台接口；不支持时自动接管当前桌面，显示蓝色内凹边缘、内收粒子与 DeepSeek 鲸鱼光标。PowerShell 辅助进程以隐藏方式启动。
 
-## 无需 Python 或独立服务
-
-**最新版 `dsh-desktop-auto` 不使用 Python，也不需要启动 Python 服务。** 安装并启用插件后，直接在 Harness 对话中描述任务即可；无需运行 `python computer_agent.py serve`，也无需启动额外的 HTTP 或 MCP 服务。
-
-运行方式：Harness 加载 JavaScript 插件 → 插件按需调用 Windows PowerShell 5.1 → Windows UI Automation / Win32 接口完成窗口检查和操作，WPF 显示接管光效。辅助 PowerShell 进程隐藏启动，由插件管理，无需用户手动启动或维护。
-
-仓库中的 Python 文件及旧版目录仅供历史参考，不是最新版的运行依赖。请安装 `desktop-auto` 子目录；根目录的旧版插件采用了不同实现。
-
 ## 环境要求
 
 - Windows 10/11，已登录且未锁屏的交互桌面。
@@ -19,7 +11,7 @@ DeepSeek Harness 的 Windows 电脑控制插件。Agent 可以发现软件、读
 - 系统自带 Windows PowerShell 5.1、.NET Framework/WPF。
 - 从源码克隆需要 Git；运行开发测试、打包需要 Node.js 与 npm。
 
-最新版插件不依赖 Python，不需要虚拟机、额外 API Key、MCP 服务或单独启动后端。模型由 Harness 配置；需要根据截图操作时，应使用支持图像输入的模型。控制管理员权限运行的软件时，Harness 也可能需要相同权限。
+最新版插件不需要虚拟机、额外 API Key、MCP 服务或单独启动后端。模型由 Harness 配置；需要根据截图操作时，应使用支持图像输入的模型。控制管理员权限运行的软件时，Harness 也可能需要相同权限。
 
 ## 安装
 
@@ -67,7 +59,7 @@ Agent 使用的工具参数如下；这是 Harness 工具调用，不是 PowerSh
 
 ## 配置与默认行为
 
-**当前没有需要填写的插件配置项，使用默认配置 `{}` 即可。** 不需要填写端口、密钥或 Python 路径。
+**当前没有需要填写的插件配置项，使用默认配置 `{}` 即可。** 不需要填写端口或密钥。
 
 | 项目 | 当前行为 |
 | --- | --- |
@@ -189,6 +181,5 @@ node integration.test.js
 | [desktop-hybrid](./desktop-hybrid/README.md) | 早期需要确认接管的版本，历史参考 |
 | [background-plugin](./background-plugin/README.md) | 早期后台只读版本，历史参考 |
 | [PLUGIN.md](./PLUGIN.md) | 根目录旧版插件接入说明 |
-| [computer_agent.py](./computer_agent.py) | 早期独立 Python 后端，不是最新版运行依赖 |
 
 鲸鱼光标素材来源：[DeepSeek 官方站点 favicon](https://www.deepseek.com/favicon.ico)。
