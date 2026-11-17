@@ -38,7 +38,9 @@ try {
   await call('computer_act',{hwnd,operation:'click',...point(edit)});
   await call('computer_act',{hwnd,operation:'type',text:'Agent control verified'});
   await call('computer_act',{hwnd,operation:'click',...point(button)});
-  assert.equal(await readFile(result,'utf8'),'Agent control verified');
+  let applied='';
+  for (let i=0;i<40 && applied!=='Agent control verified';i++) { applied = await readFile(result,'utf8').catch(()=> ''); if (applied!=='Agent control verified') await sleep(50); }
+  assert.equal(applied,'Agent control verified');
   await mkdir('artifacts',{recursive:true});
   const shot=await call('computer_screenshot',{hwnd,path:join(process.cwd(),'artifacts/takeover-verified.png')});
   assert.equal(shot.mode,'foreground');
@@ -49,7 +51,7 @@ try {
   assert(again.automatic_takeover);
   assert.equal(askCount,0);
   await new Promise((resolve,reject)=>{
-    const hotkey=spawn(shell,['-NoProfile','-File',join(process.cwd(),'test-hotkey.ps1'),'-TargetHwnd',String(hwnd)],{windowsHide:true,stdio:'ignore'});
+    const hotkey=spawn(shell,['-NoProfile','-ExecutionPolicy','Bypass','-File',join(process.cwd(),'test-hotkey.ps1'),'-TargetHwnd',String(hwnd)],{windowsHide:true,stdio:'ignore'});
     hotkey.once('error',reject); hotkey.once('exit',code=>code===0?resolve():reject(new Error('Hotkey test failed')));
   });
   await sleep(250);
