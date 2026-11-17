@@ -1,6 +1,6 @@
 {
   "name": "dsh-desktop-auto",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Background-first Windows control with visible desktop takeover for DeepSeek Harness",
   "private": true,
   "type": "module",

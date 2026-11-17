@@ -181,8 +181,18 @@ function CheckPointer($expected) {
     $actual=Position
     if ([Math]::Abs($actual.X-$expected.X) -gt 8 -or [Math]::Abs($actual.Y-$expected.Y) -gt 8) { StopNow 'Pointer moved externally; takeover stopped without restoring pointer' }
 }
+function SameProcess($a,$b) {
+    if ($a -eq [IntPtr]::Zero -or $b -eq [IntPtr]::Zero) { return $false }
+    $pidA=0; $pidB=0
+    [void][HybridNative]::GetWindowThreadProcessId($a,[ref]$pidA)
+    [void][HybridNative]::GetWindowThreadProcessId($b,[ref]$pidB)
+    return ($pidA -ne 0 -and $pidA -eq $pidB)
+}
 function HitTarget($point) {
-    if ([HybridNative]::GetAncestor([HybridNative]::WindowFromPoint($point),2) -ne [HybridNative]::GetAncestor((Target),2)) { StopNow 'Target point covered by another window/overlay; input cancelled' }
+    # Popups, menus and search panels are separate top-level windows owned by the
+    # same application; comparing top-level ancestors would reject them.
+    $hit=[HybridNative]::WindowFromPoint($point)
+    if (!(SameProcess $hit (Target))) { StopNow 'Target point covered by another application; input cancelled' }
 }
 function SmoothMove {
     $null=Lease $true $false
@@ -514,7 +524,7 @@ function Run-Action {
                     $keys=@{Enter=13;Tab=9;Escape=27;Backspace=8;Delete=46;ArrowLeft=37;Left=37;ArrowUp=38;Up=38;ArrowRight=39;Right=39;ArrowDown=40;Down=40;Home=36;End=35;PageUp=33;PageDown=34;'Ctrl+A'=65;'Ctrl+C'=67;'Ctrl+V'=86;'Ctrl+S'=83}
                     $name=[string]$script:p.key;if (!$keys.ContainsKey($name)) {throw 'Unsupported key; use Enter/Tab/Escape/Backspace/Delete/arrows/Home/End/PageUp/PageDown or Ctrl+A/C/V/S'}
                     $null=Lease $true $true
-                    [HybridNative]::Key([ushort]$keys[$name],$name.StartsWith('Ctrl+',[StringComparison]::OrdinalIgnoreCase))
+                    [HybridNative]::Key([uint16]$keys[$name],$name.StartsWith('Ctrl+',[StringComparison]::OrdinalIgnoreCase))
                     @{key=$name;sent=$true}
                 }
                 'scroll' {
